@@ -1,7 +1,7 @@
 {
     "name": "pxt-servo-pwm",
-    "version": "0.0.0",
-    "description": "",
+    "version": "0.0.1",
+    "description": "Extension for servo controll over PWM on analog pin",
     "dependencies": {
         "core": "*",
         "radio": "*",
@@ -9,8 +9,7 @@
     },
     "files": [
         "README.md",
-        "main.blocks",
-        "main.ts"
+        "servopwm.ts"
     ],
     "testFiles": [
         "test.ts"

@@ -1,3 +1,8 @@
+/**
+ * Provides access to advanced servo controll.
+ */
+//% color=#285256 icon="\uf085" block="Servo PWM"
+//% groups=['Servo', 'Servo methods']
 namespace servoPWM {
     /*
     * Applicable scale of servo speed.
