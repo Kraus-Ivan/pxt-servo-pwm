@@ -2,7 +2,7 @@
  * Provides access to advanced servo controll.
  */
 //% color=#285256 icon="\uf085" block="Servo PWM"
-//% groups=['Servo', 'Servo methods']
+//% groups=['init', 'classic', 'advanced']
 namespace servoPWM {
     /*
     * Applicable scale of servo speed.
@@ -24,8 +24,8 @@ namespace servoPWM {
      * @param pwmStart power on immediately
      */
     //% blockId=servoPWM_createServo
-    //% block="Create servo at pin %pin || with power %pwmStart"
-    //% group="Servo"
+    //% block="create servo at pin %pin || with power %pwmStart"
+    //% group="init"
     //% blockSetVariable=servo1
     //% pin.defl=AnalogPin.P0
     //% pwmStart.shadow="toggleOnOff" pwmStart.defl=false
@@ -37,17 +37,17 @@ namespace servoPWM {
     }
     
     export class Servo {
-        private _pin: AnalogPin
-        protected _pulse: number
-        private _throttling: number = 0
-        private _pulseStep: number = 10
-        private _pwmOn: boolean = false
-        private _neutralPulse: number = 1500
-        private _minPulse: number = 500
-        private _maxPulse: number = 2500
-        private _minAngle: number = 0
-        private _maxAngle: number = 180
-        private _anotherCallStack: Array<number> = []
+        private _pin: AnalogPin /* servo connected at */
+        protected _pulse: number /* pwm pulse length in μs */
+        private _throttling: number = 0 /* pause between pulseSteps [ms] */
+        private _pulseStep: number = 10 /* pwm pulse length change [μs] per one step */
+        private _pwmOn: boolean = false /* pin pull mode on/off */
+        private _neutralPulse: number = 1500 /* "middle" pulse eg. 90 degree */
+        private _minPulse: number = 500 /* "low" pulse eg. 0 degree */
+        private _maxPulse: number = 2500 /* "high" pulse eg. 180 degree */
+        private _minAngle: number = 0 
+        private _maxAngle: number = 180 /* real deflection angle at maximum pulse length */
+        private _anotherCallStack: Array<number> = [] 
 
         constructor(pin: AnalogPin, pwmStart: boolean = false) {
             this._pin = pin;
@@ -61,8 +61,8 @@ namespace servoPWM {
          *  @param milis 
          */
         //% blockId=servoPWM_setDuration
-        //% block="Set %this(servo) duration to %milis ms"
-        //% group="Servo methods"
+        //% block="set %this(servo) duration to %milis ms"
+        //% group="classic"
         //% milis.shadow="timePicker"
         public setDuration(milis: number): void {
             this.setDelay(milis / Math.idiv(this._maxPulse - this._minPulse, this._pulseStep))
@@ -73,8 +73,8 @@ namespace servoPWM {
          *  The number zero (0) corresponds to the maximum servo speed 
          */
         //% blockId=servoPWM_getDelay
-        //% block="Get %this(servo) delay in ms"
-        //% group="Servo methods"
+        //% block="get %this(servo) delay in ms"
+        //% group="advanced"
         public getDelay(): number {
             return this._throttling;
         }
@@ -85,40 +85,89 @@ namespace servoPWM {
          *  (The number zero (0) corresponds to the maximum servo speed)
         */
         //% blockId=servoPWM_setDelay
-        //% block="Set %this(servo) delay at %stepDuration ms"
-        //% group="Servo methods"
+        //% block="set %this(servo) delay at %stepDuration ms"
+        //% group="advanced"
         //% stepDuration.min=0 stepDuration.max=100
         public setDelay(stepDuration: Speed) {
             this._throttling = Math.constrain(stepDuration, 0, 100)
         }
 
 
-        // block="crickit run at $speed \\%"
-        // speed.shadow="speedPicker"
-        //public run(speed: number) {
+    // block="crickit run at $speed \\%"
+    // speed.shadow="speedPicker"
+    //public run(speed: number) {
 
-///nedokončeno
-        public setAngle(angle: number): void {
-            angle = Math.constrain(angle, this._minAngle, this._maxAngle)
+        /**
+         *  Set the servo angle
+         *  @param degrees servo arm deflection angle in degrees [360° per turn]
+        */
+        //% blockId=servoPWM_setAngle
+        //% block="set %this(servo) angle to %degrees °"
+        //% group="classic"
+        public setAngle(degrees: number): void {
+            degrees = Math.constrain(degrees | 0, this._minAngle, this._maxAngle)
+            this.setPulse(this._minPulse + this._angleToPulse(degrees))            
         }
 
-        public setPulseBy(pulseStep: number): void {
-            this.setPulse(pulseStep + this._pulse)
+        /**
+         *  Change servo arm angle by XY degrees
+         *  @param degrees angle by degrees
+         *  (a negative number is allowed)
+        */
+        //% blockId=servoPWM_setAngleBy
+        //% block="change %this(servo) angle by %degrees °"
+        //% group="classic"
+        public setAngleBy(degrees: number): void {
+            degrees = Math.constrain(degrees | 0, this._minAngle, this._maxAngle)
+            this.setPulse(this._pulse + this._angleToPulse(degrees))
         }
 
-        public setPulse(pulse: number):void {
-            pulse = Math.constrain(pulse, this._minPulse, this._maxPulse)
+        /**
+         *  Pulse length change by XY microseconds
+         *  @param micros servo pwm pulse change in microseconds
+         *  (a negative number is allowed)
+        */
+        //% blockId=servoPWM_setPulseBy
+        //% block="change %this(servo) pulse by %micros μs"
+        //% group="advanced"
+        public setPulseBy(micros: number): void {
+            this.setPulse(micros + this._pulse)
+        }
+
+        /**
+         *  Set the servo pwm pulse length
+         *  @param micros servo pwm pulse length in microseconds
+         *  (Usually between 500 and 2500 μs)
+        */
+        //% blockId=servoPWM_setPulse
+        //% block="set %this(servo) pulse to %micros μs"
+        //% group="advanced"
+        public setPulse(micros: number):void {
+            micros = Math.constrain(micros | 0, this._minPulse, this._maxPulse)
             if (this._throttling == Speed.Immediately) {
                 this._anotherCallStack.push(control.millis())
-                this._pulse = pulse
+                this._pulse = micros
                 this._pwmOn = true
                 return
             }
             this._pwmOn = true
 
             control.inBackground(function () {
-                this._setPulse(pulse);
+                this._setPulse(micros);
             })            
+        }
+
+        /**
+         *  Stop sending commands to the servo so that its rotation will stop at the current position.
+         *  (It will also not provide any holding force.)
+        */
+        //% blockId=servoPWM_stop
+        //% block="stop %this(servo)"
+        //% group="advanced" weight=100
+        public stop(): void {
+            this._pwmOn = false
+            pins.digitalReadPin(<number> this._pin)
+            pins.setPull(<number> this._pin, PinPullMode.PullNone)
         }
 
         private _setPulse(pulse: number):void {
@@ -141,10 +190,9 @@ namespace servoPWM {
             this._anotherCallStack = []   
         }
 
-        public stop(): void {
-            this._pwmOn = false
-            pins.digitalReadPin(<number> this._pin)
-            pins.setPull(<number> this._pin, PinPullMode.PullNone)
+        private _angleToPulse(degrees: number): number {
+            return (this._maxPulse - this._minPulse) *
+                ((degrees - this._minAngle) / (this._maxAngle - this._minAngle))
         }
 
         public callPulse(): void {
