@@ -80,6 +80,16 @@ namespace servoPWM {
         }
 
         /**
+         *  Get actual PWM pulse length in μs
+         */
+        //% blockId=servoPWM_getPulse
+        //% block="get %this(servo) pulse"
+        //% group="advanced" weight=90
+        public getPulse(): number {
+            return this._pulse;
+        }
+
+        /**
          *  Set throttling value
          *  @param stepDuration servo delay between steps in miliseconds
          *  (The number zero (0) corresponds to the maximum servo speed)
@@ -111,7 +121,7 @@ namespace servoPWM {
 
         /**
          *  Change servo arm angle by XY degrees
-         *  @param degrees angle by degrees
+         *  @param degrees angle in degrees
          *  (a negative number is allowed)
         */
         //% blockId=servoPWM_setAngleBy
@@ -168,6 +178,51 @@ namespace servoPWM {
             this._pwmOn = false
             pins.digitalReadPin(<number> this._pin)
             pins.setPull(<number> this._pin, PinPullMode.PullNone)
+        }
+
+        /**
+         *  Set maximum angle in degrees (default 180°)
+         *  @param degrees angle in degrees
+        */
+        //% blockId=servoPWM_setMaxAngle
+        //% block="set %this(servo) max angle at %degrees °"
+        //% group="advanced"
+        public setMaxAngle(degrees: number) {
+            this._maxAngle = Math.constrain(degrees | 0, this._minAngle, 3600)
+        }
+
+        /**
+         *  Set minimum angle in degrees (default 0°)
+         *  @param degrees angle in degrees
+         * (a negative number is allowed)
+        */
+        //% blockId=servoPWM_setMinAngle
+        //% block="set %this(servo) min angle at %degrees °"
+        //% group="advanced"
+        public setMinAngle(degrees: number) {
+            this._minAngle = Math.constrain(degrees | 0, -3600, this._maxAngle)
+        }
+
+        /**
+         *  Set maximum pulse length in μs
+         *  @param pulse pulse length in μs
+        */
+        //% blockId=servoPWM_setMaxPulse
+        //% block="set %this(servo) max pulse to %pulse μs"
+        //% group="advanced"
+        public setMaxPulse(pulse: number) {
+            this._maxPulse = Math.constrain(pulse | 0, this._minPulse, 3000)
+        }
+
+        /**
+         *  Set minimum pulse length in μs
+         *  @param pulse pulse length in μs
+        */
+        //% blockId=servoPWM_setMinPulse
+        //% block="set %this(servo) min pulse to %pulse μs"
+        //% group="advanced"
+        public setMinPulse(pulse: number) {
+            this._minPulse = Math.constrain(pulse | 0, 250, this._maxPulse)
         }
 
         private _setPulse(pulse: number):void {
