@@ -155,7 +155,7 @@ namespace servoPWM {
         public setPulse(micros: number):void {
             micros = Math.constrain(micros | 0, this._minPulse, this._maxPulse)
             if (this._throttling == Speed.Immediately) {
-                this._anotherCallStack.push(control.millis())
+                if(this._anotherCallStack.length > 0) this._anotherCallStack.push(control.millis())
                 this._pulse = micros
                 this._pwmOn = true
                 return
@@ -253,7 +253,7 @@ namespace servoPWM {
         public callPulse(): void {
             if (this._pwmOn) {
                 pins.servoSetPulse(this._pin, this._pulse) //50Hz max
-                console.logValue("pulse"+ this._pin, this._pulse)
+                serial.writeValue("pulse"+ this._pin, this._pulse)
             }
         }
     }
@@ -261,13 +261,10 @@ namespace servoPWM {
     const _servos: Array<Servo> = []
 
     control.inBackground(function () {
-        //let start
         while (true) {
             for (let i = 0; i < _servos.length; i++)
             {
-                //start = input.runningTimeMicros()
                 _servos[i].callPulse()
-                //console.logValue("dr", input.runningTimeMicros() - start)
             }
             basic.pause(20)
         }
