@@ -266,7 +266,7 @@ namespace servoPWM {
             {
                 _servos[i].callPulse()
             }
-            basic.pause(20)
+            basic.pause(50)
         }
     })
 }
